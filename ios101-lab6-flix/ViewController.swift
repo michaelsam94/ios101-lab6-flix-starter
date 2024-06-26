@@ -3,8 +3,8 @@
 //  ios101-lab6-flix
 //
 
-import UIKit
 import Nuke
+import UIKit
 
 // Conform to UITableViewDataSource
 class ViewController: UIViewController, UITableViewDataSource {
@@ -27,7 +27,8 @@ class ViewController: UIViewController, UITableViewDataSource {
         // Returns a reusable table-view cell object for the specified reuse identifier and adds it to the table. This helps to optimize table view performance as the app only needs to create enough cells to fill the screen and can reuse cells that scroll off the screen instead of creating new ones.
         // The identifier references the identifier you set for the cell previously in the storyboard.
         // The `dequeueReusableCell` method returns a regular `UITableViewCell` so we need to cast it as our custom cell (i.e. `as! MovieCell`) in order to access the custom properties you added to the cell.
-        let cell = tableView.dequeueReusableCell(withIdentifier: "MovieCell", for: indexPath) as! MovieCell
+        let cell =
+            tableView.dequeueReusableCell(withIdentifier: "MovieCell", for: indexPath) as! MovieCell
 
         // Get the movie associated table view row
         let movie = movies[indexPath.row]
@@ -38,7 +39,8 @@ class ViewController: UIViewController, UITableViewDataSource {
         if let posterPath = movie.posterPath,
 
             // Create a url by appending the poster path to the base url. https://developers.themoviedb.org/3/getting-started/images
-           let imageUrl = URL(string: "https://image.tmdb.org/t/p/w500" + posterPath) {
+            let imageUrl = URL(string: "https://image.tmdb.org/t/p/w500" + posterPath)
+        {
 
             // Use the Nuke library's load image function to (async) fetch and load the image from the image url.
             Nuke.loadImage(with: imageUrl, into: cell.posterImageView)
@@ -52,7 +54,6 @@ class ViewController: UIViewController, UITableViewDataSource {
         return cell
     }
 
-
     // Table view outlet
     @IBOutlet weak var tableView: UITableView!
 
@@ -61,18 +62,29 @@ class ViewController: UIViewController, UITableViewDataSource {
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        navigationController?.navigationBar.prefersLargeTitles = true
 
         // Assign table view data source
         tableView.dataSource = self
 
         fetchMovies()
     }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        if let selectedPath = tableView.indexPathForSelectedRow {
+            tableView.deselectRow(at: selectedPath, animated: animated)
+        }
+    }
 
     // Fetches a list of popular movies from the TMDB API
     private func fetchMovies() {
 
         // URL for the TMDB Get Popular movies endpoint: https://developers.themoviedb.org/3/movies/get-popular-movies
-        let url = URL(string: "https://api.themoviedb.org/3/movie/popular?api_key=b1446bbf3b4c705c6d35e7c67f59c413&language=en-US&page=1")!
+        let url = URL(
+            string:
+                "https://api.themoviedb.org/3/movie/popular?api_key=b1446bbf3b4c705c6d35e7c67f59c413&language=en-US&page=1"
+        )!
 
         let request = URLRequest(url: url, cachePolicy: .reloadIgnoringLocalAndRemoteCacheData)
 
@@ -90,7 +102,9 @@ class ViewController: UIViewController, UITableViewDataSource {
 
             // Check for server errors
             // Make sure the response is within the `200-299` range (the standard range for a successful response).
-            guard let httpResponse = response as? HTTPURLResponse, (200...299).contains(httpResponse.statusCode) else {
+            guard let httpResponse = response as? HTTPURLResponse,
+                (200...299).contains(httpResponse.statusCode)
+            else {
                 print("🚨 Server Error: response: \(String(describing: response))")
                 return
             }
@@ -142,12 +156,22 @@ class ViewController: UIViewController, UITableViewDataSource {
                     self?.tableView.reloadData()
                 }
             } catch {
-                print("🚨 Error decoding JSON data into Movie Response: \(error.localizedDescription)")
+                print(
+                    "🚨 Error decoding JSON data into Movie Response: \(error.localizedDescription)")
                 return
             }
         }
 
         // Don't forget to run the session!
         session.resume()
+    }
+
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        guard let selectedIndex = tableView.indexPathForSelectedRow else { return }
+
+        let selectedMovie = movies[selectedIndex.row]
+
+        guard let detailViewController = segue.destination as? DetailViewController else { return }
+        detailViewController.movie = selectedMovie
     }
 }
